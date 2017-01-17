@@ -1,0 +1,74 @@
+#!/bin/sh
+
+if [ $# -lt 1 ] ;then
+	echo "Usage $0 [options] output.pdf"
+	exit 1
+fi
+
+MODE=gray
+RES=300
+SOURCE="ADF Front"
+
+while [ $# -gt 1 ] ;do
+	case $1 in
+		150)
+			RES=150
+			;;
+		300)
+			RES=300
+			;;
+		gray)
+			MODE=gray
+			;;
+		lineart)
+			MODE=lineart
+			;;
+		color)
+			MODE=color
+			;;
+		front)
+			SOURCE="ADF Front"
+			;;
+		back)
+			SOURCE="ADF Back"
+			;;
+		duplex)
+			SOURCE="ADF Duplex"
+			;;
+		flatbed)
+			SOURCE="flatbed"
+			;;
+		*)
+			echo Unknown option "$1". Allowable tokens are:
+			echo " 150, 300 - Set resolution"
+			echo " gray       Scan in Grayscale"
+			echo " color      Scan in Color"
+			echo " lineart    Scan in Black and White"
+			echo " front      Scan the front of the page"
+			echo " back       Scan the back of the page"
+			echo " duplex     Scan both sides"
+			exit 1
+	esac
+	shift
+done
+
+OUTPUT="$1"
+
+if [ -e "$OUTPUT" ] ;then
+	echo "$OUTPUT exists; refusing to overwrite."
+	exit 1
+fi
+
+set -x
+if [ "$SOURCE" = "flatbed" ];then
+	scanimage -d "genesys" --resolution=$RES --mode=$MODE --format=tiff > /tmp/scan-$$-000.tiff
+else
+	scanimage -d "fujitsu" --source="${SOURCE}" --mode=$MODE --resolution=$RES --batch=/tmp/scan-$$-%03d.tiff --format=tiff
+fi
+PAGES=$(ls /tmp/scan-$$-*.tiff | sort -n)
+if [ "$PAGES" = "" ] ;then
+    exit 1
+fi
+tiffcp $PAGES /tmp/scan-$$.tiff
+tiff2pdf -o "$OUTPUT" -x $RES -y $RES /tmp/scan-$$.tiff
+rm -f /tmp/scan-$$*.tiff

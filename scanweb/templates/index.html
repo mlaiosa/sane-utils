@@ -1,0 +1,73 @@
+$def with (recent_scans)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <h1>New Scan</h1>
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="scan_name">Filename</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="scan_name" placeholder="filename" name="name">
+                            <div class="input-group-addon">.pdf</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="dpi">Resolution</label>
+                        <div class="radio"><label><input type="radio" name="dpi" value="150"        >150 DPI</label></div>
+                        <div class="radio"><label><input type="radio" name="dpi" value="300" checked>300 DPI</label></div>
+                        <div class="radio"><label><input type="radio" name="dpi" value="600"        >600 DPI</label></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="color">Color</label>
+                        <div class="radio"><label><input type="radio" name="color" value="lineart" checked>Black and White</label></div>
+                        <div class="radio"><label><input type="radio" name="color" value="gray"           >Grayscale</label></div>
+                        <div class="radio"><label><input type="radio" name="color" value="color"          >Color</label></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="duplex">Duplex</label>
+                        <div class="radio"><label><input type="radio" name="duplex" value="single" checked>One Side</label></div>
+                        <div class="radio"><label><input type="radio" name="duplex" value="full"          >Two Sides</label></div>
+                    </div>
+                    <button type="submit">Scan</button>
+                </form>
+            </div>
+            <div class="col-md-8">
+                <h1>Recent Scans</h1>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Date</th>
+                            <th>Pages</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        $for scan in recent_scans:
+                            <tr>
+                                <td>$scan.name</td><td>$scan.date</td><td>$scan.pages</td>
+                                <td><a class="btn btn-default btn-xs" href="view/$scan.name">View</a></td>
+                                <td><a class="btn btn-default btn-xs" href="download/$scan.name">Download</a></td>
+                            </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
