@@ -66,7 +66,7 @@ class index(object):
                 name = '{}{}{}'.format(m.group(1), int(m.group(2)) + 1, m.group(3))
 
         # Do the scan
-        args = ["/home/mike/scanpdf", str(dpi), color, 
+        args = ["../scanpdf", str(dpi), color, 
                     'duplex' if duplex else 'front', os.path.join(SCAN_DIR, name)]
         p = S.Popen(args, stdin=S.PIPE, stdout=S.PIPE, stderr=S.STDOUT)
         out, err = p.communicate()
