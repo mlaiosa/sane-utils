@@ -1,7 +1,8 @@
 import web
 import collections
 import subprocess as S
-import os, datetime, sys, re
+import os, os.path, datetime, sys, re
+import datetime, threading
 
 urls = (
     '/',                     'index',
@@ -13,15 +14,48 @@ render = web.template.render('templates/')
 class Scan(collections.namedtuple("Scan", "name date pages")):
     pass
 
-SCAN_DIR = "/home/mike/scans"
-def get_scans():
-    for pdf in os.listdir(SCAN_DIR):
-        if pdf.startswith(".") or not pdf.endswith(".pdf"):
-            continue
-        p = S.Popen(["pdfinfo", os.path.join(SCAN_DIR, pdf)], stdin=S.PIPE, stdout=S.PIPE, stderr=S.PIPE)
+class PDFInfoManager(object):
+    """Fetch and cache info about PDFs"""
+
+    # A dictionary mapping filenames to cache entries (of type E, defined
+    # below)
+    cache = None
+
+    #  An entry in the cache.  Currently E.expire is used to decide when to
+    #  expunge an entry from the cache, but if an expired entry is still
+    #  present in the cache, it will be returned.
+    E = collections.namedtuple("E", "st expire info")
+
+    # To synchronize access from multiple threads
+    lock = None
+
+    def __init__(self):
+        self.cache = {}
+        self.lock = threading.Lock()
+
+    def get_info(self, fn):
+        st = os.stat(fn)
+        expire = datetime.datetime.now() + datetime.timedelta(days=7)
+
+        with self.lock:
+            # If there's a match in the cache, return it.
+            if fn in self.cache:
+                e = self.cache[fn]
+                if st == e.st:
+                    self.cache[fn] = e._replace(expire=expire)
+                    return e.info
+
+            # Have to gather the info.
+            info = self.get_info_raw(fn)
+            self.cache[fn] = self.E(st, expire, info)
+            return info
+
+    @staticmethod
+    def get_info_raw(fn):
+        p = S.Popen(["pdfinfo", os.path.join(SCAN_DIR, fn)], stdin=S.PIPE, stdout=S.PIPE, stderr=S.PIPE)
         out, err = p.communicate()
         if err != "" or p.returncode != 0:
-            continue
+            return None
         pages = date = None
         for line in out.splitlines():
             if line.startswith("Pages:"):
@@ -32,7 +66,27 @@ def get_scans():
                     date = datetime.datetime.strptime(date, "%c")
                 except RuntimeError:
                     pass
-        yield Scan(pdf, date, pages)
+        return Scan(os.path.basename(fn), date, pages)
+
+    def expunge(self):
+        now = datetime.datetime.now()
+        expired = []
+        with self.lock:
+            for fn, e in self.cache.iteritems():
+                if e.expire > now:
+                    expired.append(fn)
+            for fn in expired:
+                del self.cache[fn]
+
+SCAN_DIR = "/home/mike/scans"
+PDF_CACHE = PDFInfoManager()
+def get_scans():
+    for pdf in os.listdir(SCAN_DIR):
+        if pdf.startswith(".") or not pdf.endswith(".pdf"):
+            continue
+        info = PDF_CACHE.get_info(os.path.join(SCAN_DIR, pdf))
+        if info is not None:
+            yield info
 
 
 class index(object):
