@@ -7,6 +7,7 @@ import datetime, threading
 urls = (
     '/',                     'index',
     '/(view|download)/(.*)', 'get_pdf',
+    '/print/(.*)',           'print_',
 )
 
 render = web.template.render('templates/')
@@ -140,6 +141,14 @@ class get_pdf(object):
             web.header('Content-Disposition', 'attachment; filename="{}"'.format(name))
         with open(os.path.join(SCAN_DIR, name), "rb") as fh:
             return fh.read()
+
+class print_(object):
+    def POST(self, name):
+        assert '/' not in name
+        p = S.Popen(["lpr", os.path.join(SCAN_DIR, name)], stdin=S.PIPE, stdout=S.PIPE, stderr=S.PIPE)
+        p.communicate()
+        raise web.seeother("/")
+
 
 def main():
     app = web.application(urls, globals())

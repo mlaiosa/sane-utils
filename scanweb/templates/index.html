@@ -55,6 +55,8 @@ $def with (recent_scans)
                             <th>Date</th>
                             <th>Pages</th>
                             <th></th>
+                            <th></th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -63,6 +65,7 @@ $def with (recent_scans)
                                 <td>$scan.name</td><td>$scan.date</td><td>$scan.pages</td>
                                 <td><a class="btn btn-default btn-xs" href="view/$scan.name">View</a></td>
                                 <td><a class="btn btn-default btn-xs" href="download/$scan.name">Download</a></td>
+                                <td><form action="print/$scan.name" method="POST"><input class="btn btn-default btn-xs" type="submit" name="Print" value="Print"></form></td>
                             </tr>
                     </tbody>
                 </table>
